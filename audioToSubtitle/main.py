@@ -11,7 +11,7 @@ headers = {
     "authorization": "2c41f4d4c47a48f49ddfd5e83272e8f9" 
 }
 
-audioFile  ="videoToText\Audio\my_audio.wav" 
+audioFile  ="../videoToText/Audio/my_audio.wav" 
 with open( audioFile , "rb") as f:
   response = requests.post(base_url + "/upload",
                           headers=headers,
