@@ -1,46 +1,59 @@
 import requests
 import json
 import time
+import os
+import cloudinary
+import cloudinary.uploader
 
-
-
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name="djw9xl2nt",
+    api_key="631834537852849",
+    api_secret="sA2jWjTcm9HrIK1piRkirg-OVvo"
+)
 
 base_url = "https://api.assemblyai.com/v2"
 
 headers = {
-    "authorization": "2c41f4d4c47a48f49ddfd5e83272e8f9" 
+    "authorization": "59f605b72dab4832849beed024124aa1" 
 }
-def audioToSubtitle(audioFile,videoId):
-    audioFile  =audioFile
-    with open( audioFile , "rb") as f:
-      response = requests.post(base_url + "/upload",
-                              headers=headers,
-                              data=f)
+
+def upload_subtitle_to_cloudinary(subtitle_text, video_id):
+    # Upload the subtitle file to Cloudinary
+    result = cloudinary.uploader.upload(subtitle_text, public_id=f"{video_id}.vtt", resource_type="raw")
+    return result['secure_url']
+
+def audioToSubtitle(audioFile, video_id):
+    audioFile = audioFile
+    with open(audioFile, "rb") as f:
+        response = requests.post(base_url + "/upload",
+                        headers=headers,
+                        data=f
+                    )  # Set timeout to None
+  # Set timeout to None
 
     upload_url = response.json()["upload_url"]
-
 
     data = {
         "audio_url": upload_url
     }
 
     url = base_url + "/transcript"
-    response = requests.post(url, json=data, headers=headers)
+    response = requests.post(url, json=data, headers=headers)  # Set timeout to None
     transcript_id = response.json()['id']
     polling_endpoint = f"https://api.assemblyai.com/v2/transcript/{transcript_id}"
 
     while True:
-      transcription_result = requests.get(polling_endpoint, headers=headers).json()
+        transcription_result = requests.get(polling_endpoint, headers=headers).json()  # Set timeout to None
 
-      if transcription_result['status'] == 'completed':
-        break
+        if transcription_result['status'] == 'completed':
+            break
 
-      elif transcription_result['status'] == 'error':
-        raise RuntimeError(f"Transcription failed: {transcription_result['error']}")
+        elif transcription_result['status'] == 'error':
+            raise RuntimeError(f"Transcription failed: {transcription_result['error']}")
 
-      else:
-        time.sleep(3)
-
+        else:
+            time.sleep(3)
 
     def get_subtitle_file(transcript_id, file_format):
         if file_format not in ["srt", "vtt"]:
@@ -48,25 +61,33 @@ def audioToSubtitle(audioFile,videoId):
 
         url = f"https://api.assemblyai.com/v2/transcript/{transcript_id}/{file_format}"
 
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers)  # Set timeout to None
 
         if response.status_code == 200:
             return response.text
-        else:
-            raise RuntimeError(f"Failed to retrieve {file_format.upper()} file: {response.status_code} {response.reason}")
+    
+
+    def createSubtitleFile(subtitle_text, file_path):
+        
+        with open(file_path, 'w') as f:
+            f.write(subtitle_text)
+            return file_path
 
 
-    import os
-
-    def save_subtitle_file(videoId, file_format, subtitle_text):
-        directory = "./SubtitleFiles"
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        file_path = os.path.join(directory, f"{videoId}.{file_format}")
-        with open(file_path, "w", encoding="utf-8") as file:
-            file.write(subtitle_text)
 
     subtitle_text = get_subtitle_file(transcript_id, "vtt")
-    save_subtitle_file(videoId, "vtt", subtitle_text)
-    return os.path.join("SubtitleFiles", f"{videoId}.vtt")
+    # print("Subtitle Text: ", subtitle_text)
 
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    parent_directory = os.path.join(current_directory, '..')
+    audio_directory = os.path.join(parent_directory, 'backend-flask','static', 'SubtitleFiles')
+    audio_path = os.path.join(audio_directory, f"{video_id}.vtt")
+
+    subtitle_file = createSubtitleFile(subtitle_text, audio_path)
+    print("Subtitle File: ", subtitle_file)
+
+    
+    subtitle_url = upload_subtitle_to_cloudinary(subtitle_file, video_id)
+    print("Subtitle URL: ", subtitle_url)
+
+    return subtitle_url

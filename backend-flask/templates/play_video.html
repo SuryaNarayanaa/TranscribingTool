@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/cloudinary-video-player/dist/cld-video-player.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/cloudinary-video-player"></script>
+
+    <title>Play Video</title>
+</head>
+<body>
+    <h1>Video Player</h1>
+    
+    <!-- <video id="videoPlayer" controls>
+        <source src="https://res.cloudinary.com/djw9xl2nt/video/upload/v1714135115/{{video_id}}.mp4" type="video/mp4">
+        <track src="../SubtitleFiles/ {{ subtitle_file }}" kind="subtitles" srclang="en" label="English" default>
+        Your browser does not support the video tag.
+    </video> -->
+    <video id="my-video" controls width="640" height="360" class="cld-video-player cld-fluid" >
+        <source src="https://res.cloudinary.com/djw9xl2nt/video/upload/v1714135115/{{video_id}}.mp4" type="video/mp4">
+        <track src="{{subtitle_url}}" kind="subtitles" srclang="en" label="English">
+
+    </video>
+    <h2>{{subtitle_url}}11</h2>
+
+
+    <script>
+        var player = cloudinary.videoPlayer('my-video', {
+            cloudName: 'djw9xl2nt',
+            publicId: '{{video_id}}'
+        });
+    </script>
+    <br>
+    <a href="../static/SubtitleFiles/{{video_id}}.vtt" download>Download Subtitles</a>
+
+    <script>
+        const video = document.getElementById('videoPlayer');
+        video.addEventListener('loadedmetadata', function() {
+            const textTracks = video.textTracks;
+            if (textTracks.length > 0) {
+                textTracks[0].mode = 'showing'; // Show subtitles by default
+            }
+        });
+    </script>
+</body>
+</html>
