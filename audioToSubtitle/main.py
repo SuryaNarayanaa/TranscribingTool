@@ -4,6 +4,7 @@ import time
 import os
 import cloudinary
 import cloudinary.uploader
+# config = aai.TranscriptionConfig(language_detection=True)
 
 # Configure Cloudinary
 cloudinary.config(
